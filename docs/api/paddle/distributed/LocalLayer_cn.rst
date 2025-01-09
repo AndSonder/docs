@@ -23,28 +23,50 @@ LocalLayer 是一个特殊的 Layer 类,用于在分布式训练中实现局部�
 
     import paddle
     import paddle.distributed as dist
-    from paddle import nn
+    from paddle.distributed import Placement, ProcessMesh, LocalLayer
 
-    # 示例:实现带 mask 的局部 loss 计算
-    class MaskedLossLayer(LocalLayer):
-        def __init__(self, mesh):
-            # 设置输出 loss 在数据并行维度上进行平均
-            super().__init__(
-                out_dist_attrs=[(mesh, [dist.Partial(axis=0, reduce_type='mean')])]
-            )
+    class CustomLayer(dist.LocalLayer):
+        def __init__(self, out_dist_attrs):
+            super().__init__(out_dist_attrs)
+            self.local_result = paddle.to_tensor(0.0)
+        def forward(self, x):
+            mask = paddle.zeros_like(x)
+            if dist.get_rank() == 0:
+                mask[1:3] = 1
+            else:
+                mask[4:7] = 1
+            x = x * mask
+            mask_sum = paddle.sum(x)
+            mask_sum = mask_sum / mask.sum()
+            self.local_result = mask_sum
+            return mask_sum
 
-        def forward(self, loss, mask):
-            # 在每张卡上独立计算 masked loss
-            masked_loss = loss * mask
-            local_loss = paddle.sum(masked_loss) / paddle.sum(mask)
-            return local_loss
+    dist.init_parallel_env()
+    mesh = ProcessMesh([0, 1], dim_names=["x"])
+    out_dist_attrs = [
+        (mesh, [dist.Partial(dist.ReduceType.kRedSum)]),
+    ]
 
-    # 使用示例
-    mesh = dist.ProcessMesh([0, 1], dim_names=["data"])
-    layer = MaskedLossLayer(mesh)
+    local_input = paddle.arange(0, 10, dtype='float32')
+    local_input = local_input + dist.get_rank()
+    input_dist = dist.auto_parallel.api.dtensor_from_local(
+        local_input,
+        mesh,
+        [dist.Shard(0)]
+    )
 
-    # 输入是分布式张量,但计算在本地进行
-    dist_loss = layer(dist_loss_tensor, dist_mask_tensor)
+    custom_layer = CustomLayer(out_dist_attrs)
+    output_dist = custom_layer(input_dist)
+    local_value = custom_layer.local_result
+
+    gathered_values = []
+    dist.all_gather(gathered_values, local_value)
+    print(f"[Rank 0] local_loss={gathered_values[0]}")
+    # [Rank 0] local_loss=1.5
+    print(f"[Rank 1] local_loss={gathered_values[1]}")
+    # [Rank 1] local_loss=6.0
+    print(f"global_loss (distributed)={output_dist}")
+    # global_loss (distributed)=7.5
 
 
 方法
