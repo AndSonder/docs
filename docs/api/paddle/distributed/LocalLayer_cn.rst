@@ -5,7 +5,7 @@ LocalLayer
 
 .. py:class:: paddle.distributed.LocalLayer(out_dist_attrs)
 
-LocalLayer 是一个特殊的 Layer 类,用于在分布式训练中实现局部计算操作。在自动并行训练中,某些操作(如带 mask 的 loss 计算、MoE 相关计算等)需要在每张卡上独立进行局部计算,而不是直接在全局分布式张量上计算。LocalLayer 通过自动处理张量转换,使得用户可以像编写单卡代码一样实现这些局部操作。
+LocalLayer 用于在分布式训练中实现局部计算操作。在自动并行训练中,某些操作(如带 mask 的 loss 计算、MoE 相关计算等)需要在每张卡上独立进行局部计算,而不是直接在全局分布式张量上计算。LocalLayer 通过自动处理张量转换,使得用户可以像编写单卡代码一样实现这些局部操作。
 
 参数
 :::::::::
