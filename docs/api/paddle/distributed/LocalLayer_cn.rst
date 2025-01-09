@@ -1,5 +1,3 @@
-明白了,我来重新修改一下 LocalLayer 的文档,加入更多关于其设计意图和实际应用场景的说明:
-
 .. _cn_api_paddle_distributed_LocalLayer:
 
 LocalLayer
