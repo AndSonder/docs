@@ -94,9 +94,9 @@ LocalLayer 可以用于但不限于以下场景:
 
 1. 带 mask 的 loss 计算:需要在每张卡上独立计算 masked token 的 loss
 2. MoE (混合专家模型)相关计算:
-   - aux_loss 计算:基于每张卡上专家分配到的局部 token 数进行计算
-   - z_loss 计算:对每张卡上的 logits 独立计算 z_loss
-   - 张量 reshape 操作:在局部维度上进行 shape 变换
+  - aux_loss 计算:基于每张卡上专家分配到的局部 token 数进行计算
+  - z_loss 计算:对每张卡上的 logits 独立计算 z_loss
+  - 张量 reshape 操作:在局部维度上进行 shape 变换
 3. 其他需要保持局部计算语义的场景
 
 **注意事项**
