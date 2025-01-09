@@ -13,7 +13,7 @@ LocalLayer 是一个特殊的 Layer 类,用于在分布式训练中实现局部�
 :::::::::
 
     - **out_dist_attrs** (list[tuple[ProcessMesh, list[Placement]]]) - 指定输出张量的分布策略。每个元素是一个元组,包含:
-      
+
       - ProcessMesh: 计算设备网格,定义计算资源的拓扑结构
       - list[Placement]: 张量分布方式的列表,描述如何将局部计算结果转换回分布式张量
 
@@ -32,7 +32,7 @@ LocalLayer 是一个特殊的 Layer 类,用于在分布式训练中实现局部�
             super().__init__(
                 out_dist_attrs=[(mesh, [dist.Partial(axis=0, reduce_type='mean')])]
             )
-        
+
         def forward(self, loss, mask):
             # 在每张卡上独立计算 masked loss
             masked_loss = loss * mask
@@ -42,7 +42,7 @@ LocalLayer 是一个特殊的 Layer 类,用于在分布式训练中实现局部�
     # 使用示例
     mesh = dist.ProcessMesh([0, 1], dim_names=["data"])
     layer = MaskedLossLayer(mesh)
-    
+
     # 输入是分布式张量,但计算在本地进行
     dist_loss = layer(dist_loss_tensor, dist_mask_tensor)
 
@@ -70,7 +70,7 @@ __call__()
 
 **使用场景**
 
-LocalLayer 主要用于以下场景:
+LocalLayer 可以用于但不限于以下场景:
 
 1. 带 mask 的 loss 计算:需要在每张卡上独立计算 masked token 的 loss
 2. MoE (混合专家模型)相关计算:
